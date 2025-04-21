@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUY BẢO TOOL V15.8</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <style>
+    body {
+      background: black;
+      color: lime;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 8px;
+      border: none;
+      width: 90%;
+      max-width: 400px;
+    }
+    button {
+      background: lime;
+      color: black;
+      font-weight: bold;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 24px;
+      color: yellow;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- XÁC THỰC -->
+<div id="authBox">
+  <h2>XÁC THỰC</h2>
+  <input id="email" type="email" placeholder="Gmail được cấp">
+  <input id="key" type="text" placeholder="Key được cấp">
+  <button onclick="kiemTraKey()">TIẾP TỤC</button>
+  <div id="authMsg" style="color: orange;"></div>
+</div>
+
+<!-- TOOL -->
+<div id="mainBox" class="hidden">
+  <h2>DUY BẢO TOOL V15.8 - DỰ ĐOÁN XÚC XẮC</h2>
+  <input id="md5Input" placeholder="Nhập mã MD5...">
+  <button onclick="phanTich()">DỰ ĐOÁN</button>
+  <div id="result">KẾT QUẢ: </div>
+</div>
+
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyDV-WnnRBzNGaJjCmJMY7NOWEPFioHOioU",
+    authDomain: "duybao-v11.firebaseapp.com",
+    databaseURL: "https://duybao-v11-default-rtdb.firebaseio.com",
+    projectId: "duybao-v11",
+    storageBucket: "duybao-v11.appspot.com",
+    messagingSenderId: "637858629893",
+    appId: "1:637858629893:web:ad4d6de4f0f191b22b4f6c"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // Xác thực key
+  async function kiemTraKey() {
+    const email = document.getElementById("email").value.trim();
+    const key = document.getElementById("key").value.trim();
+    const msg = document.getElementById("authMsg");
+
+    const snap = await db.ref("keys/" + key).get();
+    const data = snap.val();
+
+    if (!data || data.email !== email) {
+      msg.innerText = "Sai Gmail hoặc key!";
+      return;
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    if (data.expire < today || data.used >= data.maxUse) {
+      msg.innerText = "Key hết hạn hoặc vượt lượt!";
+      return;
+    }
+
+    await db.ref("keys/" + key + "/used").set(data.used + 1);
+    document.getElementById("authBox").classList.add("hidden");
+    document.getElementById("mainBox").classList.remove("hidden");
+  }
+
+  // Phân tích MD5 → Xúc xắc
+  function phanTich() {
+    const input = document.getElementById("md5Input").value.trim().toLowerCase();
+    const res = document.getElementById("result");
+
+    if (!input || input.length < 32) {
+      res.textContent = "Vui lòng nhập mã MD5 hợp lệ!";
+      return;
+    }
+
+    const last6 = input.slice(-6);
+    const decimal = parseInt(last6, 16);
+    const d1 = (decimal % 6) + 1;
+    const d2 = (Math.floor(decimal / 6) % 6) + 1;
+    const d3 = (Math.floor(decimal / 36) % 6) + 1;
+    const total = d1 + d2 + d3;
+    const icons = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
+    const faces = `${icons[d1 - 1]} ${icons[d2 - 1]} ${icons[d3 - 1]}`;
+    const tx = total >= 11 ? "TÀI" : "XỈU";
+
+    res.textContent = `Xúc xắc: ${faces} → Tổng: ${total} → ${tx}`;
+  }
+</script>
+
+</body>
+</html>
