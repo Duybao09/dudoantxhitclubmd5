@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DUY BẢO TOOL V15.8</title>
+  <title>DUY BẢO TOOL V16</title>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <style>
@@ -40,7 +40,7 @@
 </head>
 <body>
 
-<!-- XÁC THỰC -->
+<!-- Xác thực -->
 <div id="authBox">
   <h2>XÁC THỰC</h2>
   <input id="email" type="email" placeholder="Gmail được cấp">
@@ -49,16 +49,16 @@
   <div id="authMsg" style="color: orange;"></div>
 </div>
 
-<!-- TOOL -->
+<!-- Giao diện chính -->
 <div id="mainBox" class="hidden">
-  <h2>DUY BẢO TOOL V15.8 - DỰ ĐOÁN XÚC XẮC</h2>
+  <h2>DUY BẢO TOOL V16<br>Dự đoán xúc xắc từ MD5</h2>
   <input id="md5Input" placeholder="Nhập mã MD5...">
-  <button onclick="phanTich()">DỰ ĐOÁN</button>
+  <button onclick="duDoan()">DỰ ĐOÁN</button>
   <div id="result">KẾT QUẢ: </div>
 </div>
 
 <script>
-  // Firebase config
+  // Cấu hình Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyDV-WnnRBzNGaJjCmJMY7NOWEPFioHOioU",
     authDomain: "duybao-v11.firebaseapp.com",
@@ -71,17 +71,22 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // Xác thực key
+  // Xác thực Key
   async function kiemTraKey() {
     const email = document.getElementById("email").value.trim();
     const key = document.getElementById("key").value.trim();
     const msg = document.getElementById("authMsg");
 
+    if (!email || !key) {
+      msg.innerText = "Vui lòng nhập đủ Gmail và Key!";
+      return;
+    }
+
     const snap = await db.ref("keys/" + key).get();
     const data = snap.val();
 
     if (!data || data.email !== email) {
-      msg.innerText = "Sai Gmail hoặc key!";
+      msg.innerText = "Sai Gmail hoặc Key!";
       return;
     }
 
@@ -96,25 +101,23 @@
     document.getElementById("mainBox").classList.remove("hidden");
   }
 
-  // Phân tích MD5 → Xúc xắc
-  function phanTich() {
-    const input = document.getElementById("md5Input").value.trim().toLowerCase();
+  // Dự đoán xúc xắc
+  function duDoan() {
+    const md5 = document.getElementById("md5Input").value.trim().toLowerCase();
     const res = document.getElementById("result");
 
-    if (!input || input.length < 32) {
+    if (!md5 || md5.length < 32) {
       res.textContent = "Vui lòng nhập mã MD5 hợp lệ!";
       return;
     }
 
-    const last6 = input.slice(-6);
-    const decimal = parseInt(last6, 16);
-    const d1 = (decimal % 6) + 1;
-    const d2 = (Math.floor(decimal / 6) % 6) + 1;
-    const d3 = (Math.floor(decimal / 36) % 6) + 1;
+    const d1 = (parseInt(md5.slice(2, 4), 16) % 6) + 1;
+    const d2 = (parseInt(md5.slice(4, 6), 16) % 6) + 1;
+    const d3 = (parseInt(md5.slice(6, 8), 16) % 6) + 1;
     const total = d1 + d2 + d3;
+    const tx = total >= 11 ? "TÀI" : "XỈU";
     const icons = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
     const faces = `${icons[d1 - 1]} ${icons[d2 - 1]} ${icons[d3 - 1]}`;
-    const tx = total >= 11 ? "TÀI" : "XỈU";
 
     res.textContent = `Xúc xắc: ${faces} → Tổng: ${total} → ${tx}`;
   }
